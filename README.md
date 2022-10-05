@@ -55,7 +55,7 @@ Furthermore, to check for DNS vulnerabilities in web applications, the below ste
 2. On the server use ```sudo ./logs.sh``` to see which analysis methods were already tested
 3. If a specific analysis method is missing, trigger another DNS resolution (via registration) and specify the analysis method to test (e.g. test@01**02**000001.analysis.example). Goto step 2
 4. Download the file ```data/dns_log.txt```
-5. Fire up the ```log_analyzer.html``` in a browser and select the ```dns_log.txt``` file to start analyzing.  
+5. Fire up the ```log_analyzer.html``` in a browser and select the ```dns_log.txt``` file to start analyzing. (Add ```#no-plots``` for faster loading times)  
 
 However, you're not restricted to just testing e-mail servers and web applications! Since **lots** of things are using the DNS, your creativity is the limit!
 
