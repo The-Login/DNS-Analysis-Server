@@ -1,0 +1,24 @@
+$TTL    604800
+
+@       IN      SOA     ns1.domain.example. hostmaster.domain.example. (
+                              6         ; Serial
+                         604820         ; Refresh
+                          86600         ; Retry
+                        2419600         ; Expire
+                         604600 )       ; Negative Cache TTL
+
+;Name Server Information
+@       IN      NS      ns1.domain.example.
+@       IN      NS      ns2.domain.example.
+
+;IP address of Your Domain Name Server(DNS)
+ns1.domain.example.     IN       A      203.0.113.37
+ns2.domain.example.     IN       A      203.0.113.37
+
+;Some MX and A entries
+domain.example.         IN       MX     10     mail.domain.example.
+*.domain.example.       IN       MX     10     mail.domain.example.
+
+www.domain.example.     IN       A      203.0.113.37
+mail.domain.example.    IN       A      203.0.113.37
+*                         IN       A      203.0.113.37

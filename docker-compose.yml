@@ -1,0 +1,33 @@
+version: "3.1"
+services:
+  dns-analysis-server:
+    restart: always
+    build: ./DNS-Analysis-Server
+    tty: true
+    environment:
+      - NS_DOMAIN=$NS_DOMAIN
+      - NS_IP=$NS_IP
+      - LOGGING=$LOGGING
+      - METHODS=$METHODS
+      - MAPPING_FILE=$MAPPING_FILE
+    volumes:
+      - ./data/:/data
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    dns:
+      - 8.8.8.8
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      vpcbr:
+        ipv4_address: 10.100.100.3
+networks:
+  vpcbr:
+    driver: bridge
+    driver_opts: 
+     com.docker.network.driver.mtu: 9001
+    ipam:
+     config:
+       - subnet: "10.100.100.0/24"

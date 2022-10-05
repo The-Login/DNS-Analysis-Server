@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>DNS Analysis Server | Log Analyzer</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+        <script src="https://cdn.plot.ly/plotly-latest.min.js" charset="utf-8"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<style>.files input{outline:4px dashed #000;outline-offset:-10px;-webkit-transition:outline-offset .15s ease-in-out,background-color .15s linear;transition:outline-offset .15s ease-in-out,background-color .15s linear;padding:120px 0 85px 35%;text-align:center!important;margin:0;width:100%!important}.files input:focus{outline:4px dashed #000;outline-offset:-10px;-webkit-transition:outline-offset .15s ease-in-out,background-color .15s linear;transition:outline-offset .15s ease-in-out,background-color .15s linear;border:1px solid #000}.files{position:relative}.files:after{pointer-events:none;position:absolute;top:60px;left:0;width:50px;right:0;height:56px;content:"";background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAACp5AAAqeQFmoi32AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPBQTFRF////HiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdHiAdn+sWnAAAAE90Uk5TAAECAwQICgsWGBodKSwyMzY4P0FERktOT1FXWVtcXV5fYGFiY2RlZmdobnJ2eHp+ho6ot7i/xMbIyszNzs/X2dze4OPp6/Dx8/T1+vz9/gveScgAAAIPSURBVHja7dtZU8IwFIbh476vuIuIogju+y4KLqBC8///jdBWKCWJNmmIznzngl50wvsM0GHaaYn++YyNWc1P3DN2N26vP1Rk9XkcsAZYYu7MWQPse4Ada4ADD5AHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATDYWHirXs6qAxE3ldl6z3wjUNtUAmVp9p5PQAjwwmUAOyDju3gstQIXJBFKA32fPWoBr5gs2ogK2/D471wLM1mQCCaDZr07r/Qq/P0iuQAxo9ZO6x6FMIATE2A8K0r8FbMfZlwkEgGa/FktfIuADWv01IrMCLiAbfz8oWP8JYKQvEnAAhvoCQSeg1U8RmRKkxIAdc32uIAww2ucJQgDDfY6gHZAz3Q8K1joBOf6halQQBHSlHxYEAF3qBwXJICDfrX67oAnIi/+yfzF9o2qCavIboNjvGe2tv/YevbOXtJrgytteqvWzr6y83+PfFbmoJAhNtP6yu2aXntztGekLIn7/Z+6iAnnvVSRtAf/UQTzuHbnMIW91iXQFUftU8tYpAjoEkfu6gJAgel8b0CYQnsCbBAQEKv0YAE2BUj8OgC9Q68cCoNUyY2+rZA9AIysrw2QToDEAAAAAAAAAAAAAAPwxwMdp1+ejDWBv7AMcu33Hv0RjbQp0aBewR/0nVXv5z+PGlcLBqRlLM2nvofHWfAEs4xVXJqAXbAAAAABJRU5ErkJggg==);display:block;margin:0 auto;background-size:100%;background-repeat:no-repeat}.color input{background-color:#f1f1f1}.files:before{position:absolute;bottom:10px;left:0;pointer-events:none;width:100%;right:0;height:57px;content:'  drop "dns_log.txt" here  ';display:block;margin:0 auto;color:#000;font-weight:600;text-align:center}</style>
+	<style>html {filter: invert(10%)};</style>
+    <style>.result_entry{border:7px solid #000!important;margin-left:0px!important;margin-right:0px!important;margin-top:5px;background-color: #ffffff;color: #000000;};</style>
+    <style>.scatter-button:hover{background-color: #dddddd;color: #ffffff}.scatter-button:active{background-color: #ffffff;color: #000000}tr:nth-child(odd){background-color: #dddddd;}</style>
+     
+    </head>
+
+    <body>
+        <h1 class="font-weight-bold text-center" style="font-weight: bold; color: #000000">DNS Analysis Server | Log Analyzer</h1>
+        <div id="results" class="container-fluid">
+            <div class="form-group files" id="file-upload">
+                <input type="file" class="form-control" multiple="" name="inputfile" id="inputfile" />
+            </div>
+        </div>
+    </body>
+
+<script>
+var grouped_entries_by_domain_and_ip;
+var grouped_entries_by_domain;
+//https://developers.google.com/speed/public-dns/faq
+var google_dns_ougoing_ip_ranges = ["34.64.0.0/24", "34.64.1.0/24", "34.64.2.0/24", "34.101.0.0/24", "34.101.1.0/24", "34.101.2.0/24", "74.125.16.128/26", "74.125.16.192/26", "74.125.17.128/26", "74.125.17.192/26", "74.125.18.0/25", "74.125.18.128/26", "74.125.18.192/26", "74.125.19.0/25", "74.125.19.128/25", "74.125.40.0/25", "74.125.40.128/26", "74.125.40.192/26", "74.125.41.0/24", "74.125.42.0/24", "74.125.43.0/25", "74.125.43.128/25", "74.125.44.0/24", "74.125.45.0/24", "74.125.46.0/24", "74.125.47.0/24", "74.125.72.0/24", "74.125.73.0/24", "74.125.74.0/24", "74.125.75.0/24", "74.125.76.0/24", "74.125.77.0/24", "74.125.78.0/24", "74.125.79.0/24", "74.125.80.0/24", "74.125.81.0/24", "74.125.92.0/24", "74.125.112.0/24", "74.125.113.0/24", "74.125.114.128/26", "74.125.114.192/26", "74.125.115.0/24", "74.125.177.0/24", "74.125.178.0/25", "74.125.178.128/25", "74.125.179.0/25", "74.125.179.128/26", "74.125.179.192/26", "74.125.180.0/24", "74.125.181.0/25", "74.125.181.128/26", "74.125.181.192/26", "74.125.182.0/24", "74.125.183.0/24", "74.125.184.0/24", "74.125.185.0/25", "74.125.185.128/26", "74.125.185.192/26", "74.125.186.0/25", "74.125.186.128/26", "74.125.186.192/26", "74.125.187.0/25", "74.125.187.128/26", "74.125.187.192/26", "74.125.189.0/24", "74.125.190.0/24", "74.125.191.0/24", "172.217.32.0/25", "172.217.32.128/26", "172.217.32.192/26", "172.217.33.0/25", "172.217.33.128/25", "172.217.34.0/26", "172.217.34.64/26", "172.217.34.128/26", "172.217.34.192/26", "172.217.35.0/26", "172.217.35.64/26", "172.217.35.128/26", "172.217.35.192/26", "172.217.36.0/24", "172.217.37.0/25", "172.217.37.128/26", "172.217.37.192/26", "172.217.38.0/25", "172.217.38.128/26", "172.217.38.192/26", "172.217.39.0/25", "172.217.39.128/26", "172.217.39.192/26", "172.217.40.0/25", "172.217.40.128/26", "172.217.40.192/26", "172.217.41.0/25", "172.217.41.128/26", "172.217.41.192/26", "172.217.42.0/25", "172.217.42.128/26", "172.217.42.192/26", "172.217.43.0/25", "172.217.43.128/26", "172.217.43.192/26", "172.217.44.0/25", "172.217.44.128/26", "172.217.44.192/26", "172.217.45.0/25", "172.217.45.128/25", "172.217.46.0/24", "172.217.47.0/24", "172.253.0.0/25", "172.253.0.128/25", "172.253.1.0/25", "172.253.1.128/26", "172.253.1.192/26", "172.253.2.0/25", "172.253.2.128/25", "172.253.3.0/25", "172.253.3.128/25", "172.253.4.0/25", "172.253.4.128/25", "172.253.5.0/25", "172.253.5.128/25", "172.253.6.0/25", "172.253.6.128/25", "172.253.7.0/24", "172.253.8.0/24", "172.253.9.0/25", "172.253.9.128/25", "172.253.10.0/25", "172.253.10.128/25", "172.253.11.0/25", "172.253.11.128/25", "172.253.12.0/25", "172.253.12.128/25", "172.253.13.0/25", "172.253.13.128/25", "172.253.14.0/24", "172.253.15.0/24", "172.253.192.0/24", "172.253.193.0/24", "172.253.194.0/25", "172.253.194.128/26", "172.253.194.192/26", "172.253.195.0/24", "172.253.196.0/24", "172.253.197.0/24", "172.253.198.0/24", "172.253.199.0/24", "172.253.200.0/24", "172.253.201.0/24", "172.253.202.0/24", "172.253.204.0/24", "172.253.205.0/24", "172.253.206.0/24", "172.253.209.0/24", "172.253.210.0/24", "172.253.211.0/24", "172.253.212.0/24", "172.253.213.0/24", "172.253.214.0/24", "172.253.215.0/24", "172.253.216.0/24", "172.253.217.0/24", "172.253.218.0/24", "172.253.219.0/24", "172.253.220.0/24", "172.253.221.0/24", "172.253.222.0/24", "172.253.223.0/24", "172.253.224.0/24", "172.253.225.0/24", "172.253.226.0/24", "172.253.227.0/24", "172.253.228.0/24", "172.253.229.0/24", "172.253.230.0/24", "172.253.231.0/24", "172.253.232.0/24", "172.253.233.0/24", "172.253.234.0/24", "172.253.235.0/24", "172.253.236.0/24", "172.253.237.0/24", "172.253.238.0/24", "172.253.239.0/24", "172.253.240.0/24", "172.253.241.0/24", "172.253.242.0/24", "172.253.243.0/24", "172.253.244.0/24", "172.253.245.0/24", "172.253.246.0/24", "172.253.247.0/24", "172.253.248.0/24", "172.253.249.0/24", "172.253.250.0/24", "172.253.251.0/24", "172.253.252.0/24", "172.253.253.0/24", "172.253.254.0/24", "172.253.255.0/24", "173.194.90.0/24", "173.194.91.0/24", "173.194.93.0/24", "173.194.94.0/24", "173.194.95.0/24", "173.194.96.0/24", "173.194.97.0/24", "173.194.98.0/24", "173.194.99.0/24", "173.194.100.0/24", "173.194.101.0/24", "173.194.102.0/24", "173.194.103.0/24", "173.194.168.0/25", "173.194.168.128/26", "173.194.168.192/26", "173.194.169.0/24", "173.194.170.0/24", "173.194.171.0/24"];
+//https://www.cloudflare.com/ips/
+var one_dns_outgoing_ip_ranges = ["173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "172.64.0.0/13", "131.0.72.0/22", "104.16.0.0/13", "104.24.0.0/14"];
+//ASN30607 and ASN36692
+var opendns_outgoing_ip_ranges = ["204.194.232.0/24", "204.194.234.0/24", "204.194.237.0/24", "204.194.238.0/24", "67.215.64.0/23", "67.215.66.0/24", "67.215.68.0/23", "67.215.70.0/24", "67.215.73.0/24", "67.215.74.0/23", "67.215.76.0/22", "67.215.80.0/24", "67.215.82.0/23", "67.215.84.0/22", "67.215.88.0/21", "146.112.0.0/24", "146.112.2.0/23", "146.112.4.0/23", "146.112.11.0/24", "146.112.12.0/24", "146.112.14.0/23", "146.112.16.0/23", "146.112.18.0/24", "146.112.20.0/22", "146.112.25.0/24", "146.112.26.0/24", "146.112.28.0/22", "146.112.33.0/24", "146.112.34.0/23", "146.112.36.0/23", "146.112.38.0/24", "146.112.40.0/21", "146.112.48.0/20", "146.112.64.0/22", "146.112.66.0/23", "146.112.67.0/24", "146.112.72.0/24", "146.112.78.0/23", "146.112.80.0/21", "146.112.81.0/24", "146.112.82.0/23", "146.112.84.0/23", "146.112.88.0/21", "146.112.92.0/23", "146.112.93.0/24", "146.112.96.0/21", "146.112.97.0/24", "146.112.98.0/24", "146.112.100.0/23", "146.112.101.0/24", "146.112.102.0/23", "146.112.104.0/22", "146.112.106.0/23", "146.112.107.0/24", "146.112.112.0/22", "146.112.114.0/24", "146.112.116.0/22", "146.112.118.0/23", "146.112.119.0/24", "146.112.128.0/19", "146.112.160.0/23", "146.112.162.0/23", "146.112.163.0/24", "146.112.164.0/23", "146.112.165.0/24", "146.112.166.0/23", "146.112.167.0/24", "146.112.168.0/22", "146.112.172.0/23", "146.112.176.0/22", "146.112.184.0/23", "146.112.186.0/24", "146.112.190.0/23", "146.112.192.0/21", "146.112.200.0/23", "146.112.203.0/24", "146.112.204.0/22", "146.112.208.0/22", "146.112.212.0/24", "146.112.214.0/23", "146.112.216.0/23", "146.112.219.0/24", "146.112.221.0/24", "146.112.222.0/23", "146.112.224.0/19", "155.190.0.0/22", "155.190.8.0/23", "155.190.17.0/24", "155.190.18.0/23", "155.190.20.0/23", "155.190.28.0/24", "155.190.33.0/24", "155.190.34.0/23", "155.190.36.0/22", "155.190.43.0/24", "155.190.44.0/24", "155.190.46.0/24", "155.190.48.0/23", "155.190.50.0/24", "155.190.53.0/24", "155.190.54.0/23", "155.190.134.0/24", "155.190.192.0/23", "185.60.84.0/24", "185.60.86.0/23", "208.67.216.0/21", "208.69.32.0/21"];
+//ASN19281
+var quad9_outgoing_ip_ranges = ["149.112.112.0/24","149.112.149.0/24","199.249.255.0/24","9.9.9.0/24"];
+
+var public_dns_outgoing_ip_ranges = google_dns_ougoing_ip_ranges.concat(one_dns_outgoing_ip_ranges).concat(opendns_outgoing_ip_ranges).concat(quad9_outgoing_ip_ranges);
+var public_dns_outgoing_ip_ranges_int = public_dns_outgoing_ip_ranges.map(function (item) {
+    ip_range = parse_CIDR(item);
+    return [ip_to_int(ip_range[0]), ip_to_int(ip_range[1])];
+});
+
+function get_ip_fragmentation_results(domain) {
+    ip_fragmentation = "An IP fragmented response was returned by the server but denied by the resolver.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (/ns\.[a-z]{10}\.if\.[0-9]{10}.*/.exec(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["query_name"].toLowerCase()) !== null) {
+            ip_fragmentation = "An IP fragmented response was returned by the server and accepted by the resolver!";
+        }
+    }
+
+    return ip_fragmentation;
+}
+
+function get_edns_removal_results(domain) {
+    edns_removal = "A response with a missing EDNS record was returned by the server but denied by the resolver.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (/ns\.[a-z]{10}\.er\.[0-9]{10}.*/.exec(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["query_name"].toLowerCase()) !== null) {
+            edns_removal = "A response with a missing EDNS record was returned by the server and accepted by the resolver!";
+        }
+    }
+
+    return edns_removal;
+}
+
+function get_empty_edns_results(domain) {
+    empty_edns = "A response with an empty EDNS record was returned by the server but denied by the resolver.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (/ns\.[a-z]{10}\.ee\.[0-9]{10}.*/.exec(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["query_name"].toLowerCase()) !== null) {
+            empty_edns = "A response with an empty EDNS record was returned by the server and accepted by the resolver!";
+        }
+    }
+
+    return empty_edns;
+}
+
+function get_edns_max_size(domain) {
+    edns_max_size = 0;
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["edns_size"] === false) {
+            edns_max_size = false;
+            break;
+        }
+
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["edns_size"] > edns_max_size) {
+            edns_max_size = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["edns_size"];
+        }
+    }
+
+    if (edns_max_size === false) {
+        return "Not all DNS requests specified a response size!";
+    } else {
+        return "The largest specified response size is: " + edns_max_size;
+    }
+}
+
+function get_edns_usage(domain) {
+    dns_cookie_usage = "EDNS was used consistently in all DNS queries.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["edns"] === false) {
+            dns_cookie_usage = "At least one DNS query did not use EDNS!";
+            break;
+        }
+    }
+
+    return dns_cookie_usage;
+}
+
+function get_dns_cookie_usage(domain) {
+    dns_cookie_usage = "DNS cookies were used consistently in all DNS queries.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["dns_cookies"] === false) {
+            dns_cookie_usage = "At least one DNS query did not include a DNS cookie!";
+            break;
+        }
+    }
+
+    return dns_cookie_usage;
+}
+
+function get_dnssec_usage(domain) {
+    dnssec_usage = "DNSSEC was required consistently in all DNS queries.";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["dnssec"] === false) {
+            dnssec_usage = "At least one DNS query did not require DNSSEC!";
+        }
+    }
+
+    return dnssec_usage;
+}
+
+function get_0x20_encoding_usage(domain) {
+    encoding_usage = "0x20 encoding was used in all DNS queries!";
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        tmp_query_name = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["query_name"];
+        if (!((tmp_query_name == tmp_query_name.toLowerCase() && tmp_query_name != tmp_query_name.toUpperCase()) === false && (tmp_query_name != tmp_query_name.toLowerCase() && tmp_query_name == tmp_query_name.toUpperCase()) === false && isNaN(tmp_query_name))) {
+            encoding_usage = "At least one DNS query did not use 0x20 encoding!";
+            break;
+        }
+    }
+
+    return encoding_usage;
+}
+
+function parse_CIDR(CIDR) {
+    var beg = CIDR.substr(CIDR, CIDR.indexOf("/"));
+    var end = beg;
+    var off = (1 << (32 - parseInt(CIDR.substr(CIDR.indexOf("/") + 1)))) - 1;
+    var sub = beg.split(".").map(function (a) {
+        return parseInt(a);
+    });
+
+    var buf = new ArrayBuffer(4); //4 octets
+    var i32 = new Uint32Array(buf);
+    i32[0] = (sub[0] << 24) + (sub[1] << 16) + (sub[2] << 8) + sub[3] + off;
+    var end = Array.apply([], new Uint8Array(buf)).reverse().join(".");
+
+    return [beg, end];
+}
+
+function ip_to_int(ip) {
+    var ipl = 0;
+
+    ip.split(".").forEach(function (octet) {
+        ipl <<= 8;
+        ipl += parseInt(octet);
+    });
+
+    return ipl >>> 0;
+}
+
+function get_public_resolver_usage(domain) {
+    public_dns_resolver_ips = 0;
+
+    for (let i = 0; i < ips.length; i++) {
+        tmp_ip_int = ip_to_int(ips[i]);
+
+        for (let x = 0; x < public_dns_outgoing_ip_ranges_int.length; x++) {
+            tmp_ip_range_int = public_dns_outgoing_ip_ranges_int[x];
+            if (tmp_ip_int >= tmp_ip_range_int[0] && tmp_ip_int <= tmp_ip_range_int[1]) {
+                public_dns_resolver_ips++;
+            }
+        }
+    }
+
+    return "Outgoing IP addresses of big public DNS resolvers: " + public_dns_resolver_ips + " / " + ips.length;
+}
+
+function get_active_analysis_methods(domain) {
+    active_analysis_methods = [];
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i].hasOwnProperty("method") && !active_analysis_methods.includes(grouped_entries_by_domain[domain][i]["method"])) {
+            active_analysis_methods.push(grouped_entries_by_domain[domain][i]["method"]);
+        }
+    }
+
+    return active_analysis_methods.join(", ");
+}
+
+function get_highest_source_port(domain) {
+    highest_source_port = 0;
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"] > highest_source_port){
+            highest_source_port = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"];
+        }
+    }
+
+    return "The highest used source port is: " + highest_source_port
+}
+
+function get_lowest_source_port(domain) {
+    lowest_source_port = 65536;
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"] < lowest_source_port){
+            lowest_source_port = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"];
+        }
+    }
+
+    return "The lowest used source port is: " + lowest_source_port
+}
+
+function get_port_difference(domain) {
+    lowest_source_port = 65536;
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"] < lowest_source_port){
+            lowest_source_port = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"];
+        }
+    }
+
+    highest_source_port = 0;
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"] > highest_source_port){
+            highest_source_port = grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"];
+        }
+    }
+
+    return "The difference between highest and lowest source port is: " + (highest_source_port - lowest_source_port)
+}
+
+function get_common_static_ports(domain) {
+    common_static_ports = [53, 1024, 32786];
+    used_common_static_ports = [];
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        if (common_static_ports.includes(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"])) {
+            used_common_static_ports.push(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"]);
+            common_static_port_index = common_static_ports.indexOf(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"]);
+            common_static_ports.splice(common_static_port_index, 1);
+        }
+    }
+
+    if (used_common_static_ports.length > 0) {
+        return "Used common static source ports: " + used_common_static_ports;
+    } else {
+        return "No common static source ports were used.";
+    }
+}
+
+function get_most_common_port(domain) {
+    source_ports = [];
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        source_ports.push(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"]);
+    }
+
+    source_port_count = new Map([...new Set(source_ports)].map(
+        x => [x, source_ports.filter(y => y === x).length]
+    ));
+
+    most_common_source_port = source_ports.sort((a,b) =>
+        source_ports.filter(v => v===a).length
+        - source_ports.filter(v => v===b).length
+    ).pop();
+
+    return "The source port " + most_common_source_port + " was used " + source_port_count.get(most_common_source_port) + " times." 
+}
+
+function get_uniqueness_of_source_ports(domain) {
+    source_ports = [];
+
+    for (let i = 0; i < grouped_entries_by_domain[domain].length; i++) {
+        source_ports.push(grouped_entries_by_domain[domain][i]["global_request"]["dns_metadata"]["source_port"]);
+    }
+
+    source_ports_set = new Set(source_ports);
+    source_port_uniqueness = (source_ports_set.size - 1)/source_ports.length * 100;
+    required_requests = 3
+    threshold = 100 - (1 / required_requests * 100);
+
+    if (source_port_uniqueness < threshold && source_ports.length > required_requests){
+        return "The uniqueness of source ports is " + source_port_uniqueness + "%!";
+    } else {
+        return "The uniqueness of source ports is " + source_port_uniqueness + "%.";
+    }
+
+}
+
+function get_general_info_results(domain) {
+    general_info_results = [];
+
+    general_info_results.push({ info_name: "Number of DNS resolver IPs", result: ips.length });
+    general_info_results.push({ info_name: "Public DNS resolvers", result: get_public_resolver_usage(domain) });
+    general_info_results.push({ info_name: "Number of queries received", result: grouped_entries_by_domain[domain].length });
+    general_info_results.push({ info_name: "Active methods probed", result: get_active_analysis_methods(domain) });
+    general_info_results.push({ info_name: "EDNS usage", result: get_edns_usage(domain) });
+    general_info_results.push({ info_name: "EDNS maximum size", result: get_edns_max_size(domain) });
+    general_info_results.push({ info_name: "DNS cookies", result: get_dns_cookie_usage(domain) });
+    general_info_results.push({ info_name: "DNSSEC", result: get_dnssec_usage(domain) });
+    general_info_results.push({ info_name: "Removal of EDNS (OPT)", result: get_edns_removal_results(domain) });
+    general_info_results.push({ info_name: "Empty EDNS (OPT)", result: get_empty_edns_results(domain) });
+    general_info_results.push({ info_name: "IP fragmentation", result: get_ip_fragmentation_results(domain) });
+    general_info_results.push({ info_name: "0x20 encoding", result: get_0x20_encoding_usage(domain) });
+    general_info_results.push({ info_name: "Highest port", result: get_highest_source_port(domain) });
+    general_info_results.push({ info_name: "Lowest port", result: get_lowest_source_port(domain) });
+    general_info_results.push({ info_name: "Port difference", result: get_port_difference(domain) });
+    general_info_results.push({ info_name: "Common ports", result: get_common_static_ports(domain) });
+    //general_info_results.push({ info_name: "Most common port", result: get_most_common_port(domain) });
+    general_info_results.push({ info_name: "Uniqueness of source ports", result: get_uniqueness_of_source_ports(domain) });
+
+    return general_info_results;
+}
+
+function get_general_results(domain) {
+    general_info_results = [];
+
+    general_info_results.push({ info_name: "Number of identifiers", result: Object.keys(grouped_entries_by_domain).length });
+
+    return general_info_results;
+}
+
+function draw_scatter_plot_tid(domain, ip) {
+    tids = { x: [], y: [] };
+
+    for (let i = 0; i < log_entries.length; i++) {
+        tids["x"].push(i + 1);
+        tids["y"].push(log_entries[i]["global_request"]["dns_metadata"]["transaction_id"]);
+    }
+
+    return tids;
+}
+
+function draw_scatter_plot_source_port(domain, ip) {
+    source_ports = { x: [], y: [] };
+    additional_text = [];
+
+    if (ip === "") {
+        log_entries = grouped_entries_by_domain[domain];
+    } else {
+        log_entries = grouped_entries_by_domain_and_ip[domain][ip];
+    }
+
+    for (let i = 0; i < log_entries.length; i++) {
+        source_ports["x"].push(i + 1);
+        source_ports["y"].push(log_entries[i]["global_request"]["dns_metadata"]["source_port"]);
+        additional_text.push("Query name: " + log_entries[i]["global_request"]["dns_metadata"]["query_name"] + "<br>" + "Resolver IP: " + log_entries[i]["global_request"]["dns_metadata"]["resolver_ip"] + "<br>" + "Type: " + log_entries[i]["global_request"]["dns_metadata"]["type"] + "<br>" + "DNS ID: " + log_entries[i]["global_request"]["dns_metadata"]["transaction_id"] + "<br>" + "DNSSEC: " + log_entries[i]["global_request"]["dns_metadata"]["dnssec"] + "<br>" + "EDNS size: " + log_entries[i]["global_request"]["dns_metadata"]["edns_size"] + "<br>" + "DNS cookies: " + log_entries[i]["global_request"]["dns_metadata"]["dns_cookies"] + "<br>" + "Request time: " + log_entries[i]["global_request"]["metadata"]["time"] + "<br>");
+    }
+
+    source_ports_by_domain_graph = document.createElement("div");
+    source_ports_by_domain_graph.id = domain + "-source-ports-by-domain-" + ip;
+    source_ports_by_domain_graph.className = "col-6";
+    document.getElementById(domain + "-source-port-analysis").appendChild(source_ports_by_domain_graph);
+    trace = {
+        x: source_ports["x"],
+        y: source_ports["y"],
+        text: additional_text,
+        mode: "markers",
+        type: "scatter",
+        name: "Source Ports",
+        marker: { size: 12, color: "black" },
+    };
+
+    data = [trace];
+
+    if (ip === "") {
+        graph_title = "Source ports by domain";
+    } else {
+        graph_title = "Source ports by domain and resolver IP: " + ip;
+    }
+
+    layout = {
+        xaxis: {
+            range: [0, source_ports["x"].length + 1],
+            title: {
+                text: "Request Number",
+            },
+        },
+        yaxis: {
+            range: [0, 65535],
+            title: {
+                text: "Source Port",
+            },
+        },
+        title: graph_title,
+    };
+
+    Plotly.newPlot(domain + "-source-ports-by-domain-" + ip, data, layout);
+}
+
+function get_domain_name(domain) {
+    if (grouped_entries_by_domain[domain][0]["global_request"]["dns_metadata"].hasOwnProperty("domain_name")) {
+        return grouped_entries_by_domain[domain][0]["global_request"]["dns_metadata"]["domain_name"]
+    }
+    
+    return ""
+
+
+}
+
+function get_grouped_entries_by_domain(log_data) {
+    output = {};
+
+    for (let i = 0; i < log_data.length; i++) {
+        if (log_data[i] !== "") {
+            tmp_log_entry = JSON.parse(log_data[i]);
+            tmp_domain = tmp_log_entry["global_request"]["dns_metadata"]["domain"];
+
+            if (/.*([0-9]{10}).*/.exec(tmp_domain) === null) {
+                continue;
+            }
+
+            tmp_domain = /.*([0-9]{10}).*/.exec(tmp_domain)[1].substring(4);
+
+            if (!output.hasOwnProperty(tmp_domain)) {
+                output[tmp_domain] = [];
+            }
+
+            output[tmp_domain].push(tmp_log_entry);
+        }
+    }
+
+    return output;
+}
+
+function get_grouped_entries_by_domain_and_ip(log_data) {
+    output = {};
+
+    for (let i = 0; i < log_data.length; i++) {
+        if (log_data[i] !== "") {
+            tmp_log_entry = JSON.parse(log_data[i]);
+            tmp_domain = tmp_log_entry["global_request"]["dns_metadata"]["domain"];
+            tmp_ip_address = tmp_log_entry["global_request"]["metadata"]["source_ip"];
+
+            if (/.*([0-9]{10}).*/.exec(tmp_domain) === null) {
+                continue;
+            }
+
+            tmp_domain = /.*([0-9]{10}).*/.exec(tmp_domain)[1].substring(4);
+
+            if (!output.hasOwnProperty(tmp_domain)) {
+                output[tmp_domain] = {};
+            }
+
+            if (!output[tmp_domain].hasOwnProperty(tmp_ip_address)) {
+                output[tmp_domain][tmp_ip_address] = [];
+            }
+
+            output[tmp_domain][tmp_ip_address].push(tmp_log_entry);
+        }
+    }
+
+    return output;
+}
+
+function get_ips_by_domain(domain) {
+    ips = [];
+
+    for (let [ip, value] of Object.entries(grouped_entries_by_domain_and_ip[domain])) {
+        ips.push(ip);
+    }
+
+    return ips;
+}
+
+function print_general_info_list(general_info,domain) {
+    general_info_results = get_general_info_results(domain);
+    general_info_results_list = document.createElement("ul");
+    general_info_results_list.id = domain + "-general-info-results";
+
+    for (let i = 0; i < general_info_results.length; i++) {
+        general_info_result = document.createElement("li");
+        general_info_result_title = document.createElement("b");
+        general_info_result_title_text = document.createTextNode(general_info_results[i]["info_name"] + ": ");
+        general_info_result_title.appendChild(general_info_result_title_text);
+        //general_info_result_text =  document.createTextNode(general_info_results[i]["result"]);
+        general_info_result.appendChild(general_info_result_title);
+        //general_info_result.appendChild(general_info_result_text);
+        general_info_result.insertAdjacentHTML("beforeend",general_info_results[i]["result"]);
+        general_info_results_list.appendChild(general_info_result);
+    }
+
+    general_info.appendChild(general_info_results_list);
+}
+
+function print_general_info(analysis) {
+    domain = analysis.id;
+    general_info = document.createElement("div");
+    general_info.id = domain + "-general-info";
+    general_info.className = "col-6";
+    general_info_title = document.createElement("h3");
+    general_info_title_text = document.createTextNode("General Info");
+    general_info_title.appendChild(general_info_title_text);
+    general_info.appendChild(general_info_title);
+    print_general_info_list(general_info, domain);
+    analysis.appendChild(general_info);
+}
+
+function print_ip_addresses(analysis) {
+    domain = analysis.id;
+    ip_addresses = document.createElement("div");
+    ip_addresses.id = domain + "-ip-addresses";
+    ip_addresses.className = "col-6";
+    ip_addresses_title = document.createElement("h3");
+    ip_addresses_title_text = document.createTextNode("DNS resolver IP addresses");
+    ip_addresses_title.appendChild(ip_addresses_title_text);
+    ip_addresses.appendChild(ip_addresses_title);
+
+    ip_address_list = document.createElement("ul");
+    ip_address_list.id = domain + "-ip-address-list";
+    ip_address_list.className = "list-unstyled row";
+
+    for (let i = 0; i < ips.length; i++) {
+        ip_address = document.createElement("li");
+        ip_address.className = "list-item col-2 py-2";
+        ip_address_ref = document.createElement("a");
+        ip_address_ref.href = "#" + domain + "-source-ports-by-domain-" + ips[i];
+        ip_address_text = document.createTextNode(ips[i]);
+        ip_address_ref.appendChild(ip_address_text);
+        ip_address.appendChild(ip_address_ref);
+        ip_address_list.appendChild(ip_address);
+    }
+
+    ip_addresses.appendChild(ip_address_list);
+    analysis.appendChild(ip_addresses);
+}
+
+function print_source_ports(analysis) {
+    domain = analysis.id;
+    ips = get_ips_by_domain(domain);
+    source_port_analysis = document.createElement("div");
+    source_port_analysis.id = domain + "-source-port-analysis";
+    source_port_analysis.className = "row";
+    source_port_analysis_title = document.createElement("h3");
+    source_port_analysis_title_text = document.createTextNode("Source Port Analysis");
+    source_port_analysis_title.appendChild(source_port_analysis_title_text);
+    source_port_analysis.appendChild(source_port_analysis_title);
+    analysis.appendChild(source_port_analysis);
+    if (window.location.hash != "#no-plots"){
+        draw_scatter_plot_source_port(domain, "");
+    }
+    //for (let i = 0; i < ips.length; i++) {
+    //    draw_scatter_plot_source_port(domain, ips[i]);
+    //}
+}
+
+function print_load_source_ports_button(analysis) {
+    domain = analysis.id;
+    load_source_ports_button = document.createElement("div");
+    load_source_ports_button.id = domain + "-load-scatter-plots";
+    load_source_ports_button.className = "col-12 text-center scatter-button";
+    load_source_ports_button.style = "font-weight: bold; color: #000000;border-top:7px solid #000!important;";
+    load_source_ports_button.addEventListener("click", function(){
+        domain = this.parentNode.id;
+        ips = get_ips_by_domain(domain);
+        for (let i = 0; i < ips.length; i++) {
+            draw_scatter_plot_source_port(domain, ips[i]);
+            }
+        this.remove() 
+    }); 
+    load_source_ports_button_title = document.createElement("h3");
+    load_source_ports_button_title_text = document.createTextNode("Generate Scatter Plot for each IP");
+    load_source_ports_button_title.appendChild(load_source_ports_button_title_text);
+    load_source_ports_button.appendChild(load_source_ports_button_title);
+    analysis.appendChild(load_source_ports_button);
+}
+
+function print_general_list(general) {
+    general_results = get_general_results();
+    general_results_list = document.createElement("ul");
+    general_results_list.id = "general-results";
+
+    for (let i = 0; i < general_results.length; i++) {
+        general_result = document.createElement("li");
+        general_result_title = document.createElement("b");
+        general_result_title_text = document.createTextNode(general_results[i]["info_name"] + ": ");
+        general_result_title.appendChild(general_result_title_text);
+        general_result_text =  document.createTextNode(general_results[i]["result"]);
+        general_result.appendChild(general_result_title);
+        general_result.appendChild(general_result_text);
+        general_results_list.appendChild(general_result);
+    }
+
+    general.appendChild(general_results_list);
+}
+
+function print_domain(domain) {
+    ips = get_ips_by_domain(domain);
+    analysis = document.createElement("div");
+    analysis.id = domain;
+    analysis.className = "row border rounded result_entry darkborder";
+    analysis_title = document.createElement("h2");
+    if (get_domain_name(domain) !== "") {
+        analysis_title_text = document.createTextNode(`Analysis of domain identifier: ${domain} (${get_domain_name(domain)})`);
+    } else {
+        analysis_title_text = document.createTextNode(`Analysis of domain identifier: ${domain}`);
+    }
+    
+    analysis_title.appendChild(analysis_title_text);
+    analysis.appendChild(analysis_title);
+    print_general_info(analysis);
+    print_ip_addresses(analysis);
+    results = document.getElementById("results");
+    results.appendChild(analysis);
+    print_source_ports(analysis);
+    print_load_source_ports_button(analysis);
+}
+
+function print_overview() {
+    overview = document.createElement("div");
+    overview.id = "overview";
+    overview.className = "row border rounded result_entry darkborder";
+    overview_title = document.createElement("h2");
+    overview_title_text = document.createTextNode("Overview");
+    overview_title.appendChild(overview_title_text);
+    overview.appendChild(overview_title);
+    overview_list = document.createElement("ul");
+    overview_list.id = "overview-list";
+    overview_list.className = "list-unstyled row";
+
+    general = document.createElement("li");
+    general.className = "list-item col-12";
+    general_title = document.createElement("h3");
+    general_title_text = document.createTextNode("General");
+    general_title.appendChild(general_title_text);
+    overview.appendChild(general_title);
+    print_general_list(general);
+    overview_list.append(general);
+
+    domain_identifiers = document.createElement("h3");
+    domain_identifiers_text = document.createTextNode("Domain Identifiers");
+    domain_identifiers.appendChild(domain_identifiers_text);
+    overview_list.appendChild(domain_identifiers);
+
+    for (let [domain, value] of Object.entries(grouped_entries_by_domain_and_ip)) {
+        ips = get_ips_by_domain(domain);
+        domain_overview = document.createElement("li");
+        domain_overview.className = "list-item col-6 py-2";
+        domain_ref = document.createElement("a");
+        domain_ref.href = "#" + domain;
+        domain_ref_text = document.createTextNode(domain + ": " + get_domain_name(domain));
+        domain_ref.appendChild(domain_ref_text);
+        domain_overview.appendChild(domain_ref);
+        print_general_info_list(domain_overview,domain);
+        overview_list.appendChild(domain_overview);
+    }
+
+    overview.appendChild(overview_list);
+    results = document.getElementById("results");
+    results.appendChild(overview);
+}
+
+function print_results() {
+
+    print_overview();
+    for (let [domain, value] of Object.entries(grouped_entries_by_domain_and_ip)) {
+        print_domain(domain);
+    }
+}
+
+var log_data = [];
+document.getElementById("inputfile").addEventListener("change", function () {
+    var file_reader = new FileReader();
+    file_reader.onload = function () {
+        log_data = file_reader.result.split("\n");
+        grouped_entries_by_domain_and_ip = get_grouped_entries_by_domain_and_ip(log_data);
+        grouped_entries_by_domain = get_grouped_entries_by_domain(log_data);
+        print_results();
+    };
+
+    file_reader.readAsText(this.files[0]);
+});
+
+</script>
+  
+</html>
