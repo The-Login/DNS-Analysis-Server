@@ -10,7 +10,7 @@ In this case, an attacker can manipulate the mapping between domain names and as
 The consequences of such DNS vulnerabilties range from bypassing e-mail spam protections to compromising entire systems. For example, in some cases it's possible to take over a **fully patched** WordPress instance "just" by manipulating the DNS resolution.  
 Now, to check for vulnerabilities in the DNS name resolution, the DNS Analysis Server comes into play.
 
-*A more in-depth look at DNS security and the inner workings of the DNS Analysis Server can be found [here](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) and [here](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/).*
+*A more in-depth look at DNS security and the inner workings of the DNS Analysis Server can be found [here](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) and [here](https://sec-consult.com/blog/detail/melting-the-dns-iceberg-taking-over-your-infrastructure-kaminsky-style/).*
 
 ## Requirements and Installation
 For a complete setup of the DNS Analysis Server the following components are required:
@@ -86,7 +86,7 @@ For example, if the DNS infrastructure is vulnerable to Kaminsky attacks, you mi
 In this case, only port 53 was used as source port by the DNS resolver.  
 The other requirements mentioned can be checked by reading the "General Info" section of the log analyzer output or by analyzing the dns_log.txt log entries directly.
 ![log_analyzer_overview](https://user-images.githubusercontent.com/84237895/188706313-ab9bd732-676c-408f-8344-043a0c5827df.PNG)  
-*As already mentioned, for a more in-depth look at this topic check out [this](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) and [this](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) blog post.*  
+*As already mentioned, for a more in-depth look at this topic check out [this](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) and [this](https://sec-consult.com/blog/detail/melting-the-dns-iceberg-taking-over-your-infrastructure-kaminsky-style/) blog post.*  
 ### Extra Tooling
 In the [tools/](https://github.com/The-Login/DNS-Analysis-Server/tree/main/tools) directory you can find some neat utility scripts.
 - **domain_mapper.py**: This script can be used to create a mapping between analysis IDs (e.g., 0100001337) and domain names (e.g., google.com). It's great when analyzing thousands of domains, since you don't have to map analysis IDs to domain names manually! So, **BEFORE** starting your analysis server, execute:  
