@@ -7,7 +7,7 @@ The DNS (Domain Name System) is a central part of the Internet and allows us to,
 **But what happens, if this DNS name resolution is vulnerable?**  
 In this case, an attacker can manipulate the mapping between domain names and associated data. All of a sudden "google.com" could be pointing to "13.33.33.37" instead of Google's actual IP address.  
 ![BLOGPOST-Poisoned DNS (1)](https://user-images.githubusercontent.com/84237895/188393745-80f199f9-ee7f-419d-9969-41dc18d094ec.png)  
-The consequences of such DNS vulnerabilties range from bypassing e-mail spam protections to compromising entire systems. For example, in some cases it's possible to take over a **fully patched** WordPress instance "just" by manipulating the DNS resolution.  
+The consequences of such DNS vulnerabilities range from bypassing e-mail spam protections to compromising entire systems. For example, in some cases it's possible to take over a **fully patched** WordPress instance "just" by manipulating the DNS resolution.  
 Now, to check for vulnerabilities in the DNS name resolution, the DNS Analysis Server comes into play.
 
 *A more in-depth look at DNS security and the inner workings of the DNS Analysis Server can be found [here](https://sec-consult.com/blog/detail/forgot-password-taking-over-user-accounts-kaminsky-style/) and [here](https://sec-consult.com/blog/detail/melting-the-dns-iceberg-taking-over-your-infrastructure-kaminsky-style/).*
