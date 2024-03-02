@@ -58,6 +58,9 @@ ttl_short = 5
 ttl_medium = 3600
 ttl_long = 604800
 
+# timeout in seconds
+timeout = 3
+
 # Number of records to add when using recursive delegation
 number_of_records_to_add_rd = 10
 
@@ -578,7 +581,10 @@ def dns_proxy(pkt):
         wrpcap("dns_dump.pcap", tmp_local_request, append=True)
 
     # Relay DNS request to the local Bind9 service and read the response
-    local_response = sr1(local_request)
+    local_response = sr1(local_request, timeout=timeout)
+    # If there is no response from the Bind9 service (shouldn't be the case), return
+    if not local_response:
+        return False
 
     # The local response needs to be cast to DNS first (it's sent on port 54 and therefore doesn't get detected as DNS)
     local_response_payload = local_response.load
